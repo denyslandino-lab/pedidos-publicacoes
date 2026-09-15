@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Pedidos de Publicações</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1F3A5F">
+<style>
+  :root{
+    --paper:#F6F3EC;
+    --paper-line:#E4DDCB;
+    --ink:#242019;
+    --ink-soft:#6B6459;
+    --navy:#1F3A5F;
+    --navy-deep:#152A47;
+    --clay:#B5652D;
+    --ok:#3F6B4A;
+    --ok-bg:#E7EEE5;
+    --pending-bg:#F3E6D8;
+    --pending-ink:#8A5A25;
+    --card:#FFFFFF;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Iowan Old Style','Georgia',serif;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:80px;
+  }
+  header{
+    padding:28px 20px 18px;
+    border-bottom:1px solid var(--paper-line);
+  }
+  header h1{
+    margin:0;
+    font-size:22px;
+    font-weight:600;
+    letter-spacing:0.2px;
+    color:var(--navy-deep);
+  }
+  header p{
+    margin:4px 0 0;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+
+  .toolbar{
+    display:flex;
+    gap:8px;
+    padding:14px 20px 0;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  }
+  .toolbar button{
+    flex:1;
+    border:1px solid var(--paper-line);
+    background:var(--card);
+    color:var(--ink-soft);
+    padding:9px 6px;
+    border-radius:8px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .toolbar button.active{
+    background:var(--navy);
+    border-color:var(--navy);
+    color:#fff;
+  }
+
+  main{padding:16px 20px 0;}
+
+  .empty{
+    text-align:center;
+    padding:60px 20px;
+    color:var(--ink-soft);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  }
+  .empty .mark{
+    font-family:Georgia,serif;
+    font-size:34px;
+    color:var(--navy);
+    margin-bottom:6px;
+  }
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--paper-line);
+    border-radius:var(--radius);
+    padding:14px 16px;
+    margin-bottom:12px;
+    position:relative;
+  }
+  .card .top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+  }
+  .card .pub{
+    font-size:16px;
+    font-weight:700;
+    color:var(--navy-deep);
+    line-height:1.3;
+  }
+  .card .publicador{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:13.5px;
+    color:var(--ink-soft);
+    margin-top:2px;
+  }
+  .status{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:11px;
+    font-weight:700;
+    padding:4px 9px;
+    border-radius:20px;
+    white-space:nowrap;
+  }
+  .status.pendente{background:var(--pending-bg);color:var(--pending-ink);}
+  .status.entregue{background:var(--ok-bg);color:var(--ok);}
+
+  .dates{
+    margin-top:10px;
+    padding-top:10px;
+    border-top:1px dashed var(--paper-line);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    row-gap:6px;
+  }
+  .dates div b{
+    display:block;
+    color:var(--ink);
+    font-size:13px;
+    font-weight:600;
+  }
+
+  .card .actions{
+    margin-top:12px;
+    display:flex;
+    gap:8px;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  }
+  .card .actions button{
+    flex:1;
+    border:none;
+    border-radius:8px;
+    padding:9px 0;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .btn-deliver{background:var(--navy);color:#fff;}
+  .btn-edit{background:var(--paper);color:var(--ink);border:1px solid var(--paper-line)!important;}
+  .btn-del{background:var(--paper);color:var(--clay);border:1px solid var(--paper-line)!important;}
+
+  .fab{
+    position:fixed;
+    right:20px;
+    bottom:24px;
+    width:56px;
+    height:56px;
+    border-radius:50%;
+    background:var(--navy);
+    color:#fff;
+    border:none;
+    font-size:28px;
+    line-height:56px;
+    text-align:center;
+    box-shadow:0 6px 16px rgba(21,42,71,0.35);
+    cursor:pointer;
+  }
+
+  .sheet-bg{
+    display:none;
+    position:fixed;inset:0;
+    background:rgba(20,17,12,0.45);
+    z-index:20;
+  }
+  .sheet-bg.show{display:block;}
+  .sheet{
+    position:fixed;
+    left:0;right:0;bottom:0;
+    background:var(--paper);
+    border-radius:16px 16px 0 0;
+    padding:20px 20px 28px;
+    max-height:88vh;
+    overflow-y:auto;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  }
+  .sheet h2{
+    margin:0 0 16px;
+    font-family:Georgia,serif;
+    font-size:19px;
+    color:var(--navy-deep);
+  }
+  .field{margin-bottom:14px;}
+  .field label{
+    display:block;
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--ink-soft);
+    margin-bottom:5px;
+  }
+  .field input{
+    width:100%;
+    padding:11px 12px;
+    border:1px solid var(--paper-line);
+    border-radius:8px;
+    font-size:15px;
+    background:#fff;
+    color:var(--ink);
+    font-family:inherit;
+  }
+  .field input:focus{outline:2px solid var(--navy);outline-offset:1px;}
+  .sheet-actions{
+    display:flex;
+    gap:10px;
+    margin-top:6px;
+  }
+  .sheet-actions button{
+    flex:1;
+    padding:12px 0;
+    border-radius:8px;
+    border:none;
+    font-size:15px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .btn-save{background:var(--navy);color:#fff;}
+  .btn-cancel{background:transparent;color:var(--ink-soft);border:1px solid var(--paper-line)!important;}
+
+  .footer-link{
+    text-align:center;
+    padding:18px 20px 0;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+  .footer-link span{
+    text-decoration:underline;
+    cursor:pointer;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Pedidos de Publicações</h1>
+  <p>Controle de pedidos do Salão do Reino</p>
+</header>
+
+<div class="toolbar">
+  <button id="tab-pendente" class="active">Pendentes</button>
+  <button id="tab-entregue">Entregues</button>
+  <button id="tab-todos">Todos</button>
+</div>
+
+<main id="list"></main>
+
+<div class="footer-link"><span id="backup-link">exportar / importar backup</span></div>
+
+<button class="fab" id="btn-new">+</button>
+
+<div class="sheet-bg" id="sheet-bg">
+  <div class="sheet">
+    <h2 id="sheet-title">Novo pedido</h2>
+    <div class="field">
+      <label>Publicação pedida</label>
+      <input id="f-pub" type="text" placeholder="Ex.: A Sentinela — edição de estudo">
+    </div>
+    <div class="field">
+      <label>Nome do publicador</label>
+      <input id="f-nome" type="text" placeholder="Nome de quem pediu">
+    </div>
+    <div class="field">
+      <label>Data do pedido do publicador</label>
+      <input id="f-data-pub" type="date">
+    </div>
+    <div class="field">
+      <label>Data do pedido no site</label>
+      <input id="f-data-site" type="date">
+    </div>
+    <div class="field">
+      <label>Data de entrega ao publicador</label>
+      <input id="f-data-entrega" type="date">
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-cancel" id="btn-cancel">Cancelar</button>
+      <button class="btn-save" id="btn-save">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORE_KEY = 'pedidos-publicacoes-v1';
+let editingId = null;
+let filter = 'pendente';
+
+function load(){
+  try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }
+  catch(e){ return []; }
+}
+function save(items){
+  localStorage.setItem(STORE_KEY, JSON.stringify(items));
+}
+function uid(){
+  return Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+}
+function fmtDate(iso){
+  if(!iso) return '—';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function render(){
+  const items = load();
+  const list = document.getElementById('list');
+  let shown = items;
+  if(filter === 'pendente') shown = items.filter(i => !i.dataEntrega);
+  if(filter === 'entregue') shown = items.filter(i => !!i.dataEntrega);
+
+  shown = shown.slice().sort((a,b) => {
+    // pendentes mais antigos primeiro, entregues mais recentes primeiro
+    if(filter === 'entregue') return (b.dataEntrega||'').localeCompare(a.dataEntrega||'');
+    return (a.dataSite||a.dataPub||'').localeCompare(b.dataSite||b.dataPub||'');
+  });
+
+  if(shown.length === 0){
+    const msg = filter === 'entregue' ? 'Nenhum pedido entregue ainda.' :
+                filter === 'pendente' ? 'Nenhum pedido pendente. Tudo em dia.' :
+                'Nenhum pedido cadastrado.';
+    list.innerHTML = `<div class="empty"><div class="mark">·</div>${msg}</div>`;
+    return;
+  }
+
+  list.innerHTML = shown.map(i => `
+    <div class="card">
+      <div class="top">
+        <div>
+          <div class="pub">${escapeHtml(i.publicacao)}</div>
+          <div class="publicador">${escapeHtml(i.nome)}</div>
+        </div>
+        <div class="status ${i.dataEntrega ? 'entregue' : 'pendente'}">${i.dataEntrega ? 'Entregue' : 'Pendente'}</div>
+      </div>
+      <div class="dates">
+        <div>Pedido do publicador<b>${fmtDate(i.dataPub)}</b></div>
+        <div>Pedido no site<b>${fmtDate(i.dataSite)}</b></div>
+        <div>Entrega ao publicador<b>${fmtDate(i.dataEntrega)}</b></div>
+      </div>
+      <div class="actions">
+        ${!i.dataEntrega ? `<button class="btn-deliver" data-act="deliver" data-id="${i.id}">Marcar entregue</button>` : ''}
+        <button class="btn-edit" data-act="edit" data-id="${i.id}">Editar</button>
+        <button class="btn-del" data-act="del" data-id="${i.id}">Excluir</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+document.getElementById('list').addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  const id = btn.dataset.id;
+  const act = btn.dataset.act;
+  const items = load();
+  const item = items.find(i => i.id === id);
+  if(!item) return;
+
+  if(act === 'deliver'){
+    const today = new Date().toISOString().slice(0,10);
+    item.dataEntrega = today;
+    save(items);
+    render();
+  } else if(act === 'del'){
+    if(confirm(`Excluir o pedido de "${item.publicacao}" para ${item.nome}?`)){
+      save(items.filter(i => i.id !== id));
+      render();
+    }
+  } else if(act === 'edit'){
+    openSheet(item);
+  }
+});
+
+document.querySelectorAll('.toolbar button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.toolbar button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    filter = b.id.replace('tab-','');
+    render();
+  });
+});
+
+function openSheet(item){
+  editingId = item ? item.id : null;
+  document.getElementById('sheet-title').textContent = item ? 'Editar pedido' : 'Novo pedido';
+  document.getElementById('f-pub').value = item ? item.publicacao : '';
+  document.getElementById('f-nome').value = item ? item.nome : '';
+  document.getElementById('f-data-pub').value = item ? (item.dataPub||'') : '';
+  document.getElementById('f-data-site').value = item ? (item.dataSite||'') : '';
+  document.getElementById('f-data-entrega').value = item ? (item.dataEntrega||'') : '';
+  document.getElementById('sheet-bg').classList.add('show');
+}
+function closeSheet(){
+  document.getElementById('sheet-bg').classList.remove('show');
+  editingId = null;
+}
+
+document.getElementById('btn-new').addEventListener('click', () => openSheet(null));
+document.getElementById('btn-cancel').addEventListener('click', closeSheet);
+document.getElementById('sheet-bg').addEventListener('click', e => {
+  if(e.target.id === 'sheet-bg') closeSheet();
+});
+
+document.getElementById('btn-save').addEventListener('click', () => {
+  const publicacao = document.getElementById('f-pub').value.trim();
+  const nome = document.getElementById('f-nome').value.trim();
+  const dataPub = document.getElementById('f-data-pub').value;
+  const dataSite = document.getElementById('f-data-site').value;
+  const dataEntrega = document.getElementById('f-data-entrega').value;
+
+  if(!publicacao || !nome){
+    alert('Preencha ao menos a publicação e o nome do publicador.');
+    return;
+  }
+
+  const items = load();
+  if(editingId){
+    const item = items.find(i => i.id === editingId);
+    Object.assign(item, {publicacao, nome, dataPub, dataSite, dataEntrega});
+  } else {
+    items.push({id: uid(), publicacao, nome, dataPub, dataSite, dataEntrega});
+  }
+  save(items);
+  closeSheet();
+  render();
+});
+
+document.getElementById('backup-link').addEventListener('click', () => {
+  const choice = confirm('OK para exportar um backup. Cancelar para importar um backup existente.');
+  if(choice){
+    const data = JSON.stringify(load(), null, 2);
+    const blob = new Blob([data], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pedidos-publicacoes-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+  } else {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = () => {
+      const file = input.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try{
+          const imported = JSON.parse(reader.result);
+          if(!Array.isArray(imported)) throw new Error();
+          if(confirm(`Importar ${imported.length} pedido(s)? Isso vai substituir os dados atuais.`)){
+            save(imported);
+            render();
+          }
+        }catch(e){
+          alert('Arquivo inválido.');
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  }
+});
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+
+render();
+</script>
+</body>
+</html>
