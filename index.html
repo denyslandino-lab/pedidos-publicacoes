@@ -319,7 +319,11 @@
 
 <main id="list"></main>
 
-<div class="footer-link"><span id="backup-link">exportar / importar backup</span></div>
+<div class="footer-link">
+  <span id="backup-link">exportar / importar backup</span>
+  &nbsp;·&nbsp;
+  <span id="clear-link" style="color:var(--red);">limpar dados</span>
+</div>
 
 <button class="fab" id="btn-new">+</button>
 
@@ -534,6 +538,21 @@ document.getElementById('backup-link').addEventListener('click', () => {
     };
     input.click();
   }
+});
+
+document.getElementById('clear-link').addEventListener('click', () => {
+  const items = load();
+  if(items.length === 0){
+    alert('Não há nenhum dado salvo para limpar.');
+    return;
+  }
+  const step1 = confirm(`Isso vai apagar todos os ${items.length} pedido(s) salvos neste aparelho, liberando o espaço usado. Essa ação não pode ser desfeita. Recomendado: exporte um backup antes.\n\nContinuar?`);
+  if(!step1) return;
+  const step2 = confirm('Tem certeza mesmo? Os dados salvos aqui serão apagados definitivamente.');
+  if(!step2) return;
+  localStorage.removeItem(STORE_KEY);
+  render();
+  alert('Dados limpos.');
 });
 
 if('serviceWorker' in navigator){
